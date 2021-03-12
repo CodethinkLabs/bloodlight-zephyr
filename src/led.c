@@ -18,7 +18,7 @@
 #include <stdint.h>
 
 #include <libopencm3/stm32/rcc.h>
-#include <libopencm3/stm32/gpio.h>
+#include <drivers/gpio.h>
 
 #include "common/error.h"
 #include "common/util.h"
@@ -124,8 +124,9 @@ static inline uint16_t bl_led__get_pin_mask(
 
 static inline void bl_led__gpio_mode_setup(enum led_port port)
 {
-	gpio_mode_setup(led_port[port], GPIO_MODE_OUTPUT, GPIO_PUPD_NONE,
-			bl_led__get_pin_mask(port, 0xffff));
+	const struct device * gpio;
+	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(led_port[port])));
+	gpio_pin_configure(gpio, bl_led__get_pin_mask(port, 0xffff), GPIO_OUTPUT);
 }
 
 /* Exported function, documented in led.h */
@@ -152,8 +153,8 @@ static inline void bl_led__set(
 	 * 2. Making bl_led_init() cache the clear masks so they can be reused
 	 *    here.
 	 */
-	gpio_clear(led_port[port], bl_led__get_pin_mask(port, 0xffff));
-	gpio_set(led_port[port], bl_led__get_pin_mask(port, led_mask));
+	gpio_port_set_masked(led_port[port], bl_led__get_pin_mask(port, 0xffff), '0');
+	gpio_port_set_masked(led_port[port], bl_led__get_pin_mask(port, led_mask), '1');
 }
 
 /* Exported function, documented in led.h */
@@ -169,11 +170,13 @@ enum bl_error bl_led_set(uint16_t led_mask)
 void bl_led_status_set(bool enable)
 {
 #if (BL_REVISION >= 2)
+	const struct device * gpio;
+	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(GPIOB)));
 	if (enable) {
-		gpio_mode_setup(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO7);
-		gpio_clear(GPIOB, GPIO7);
+		gpio_pin_configure(gpio, 7, GPIO_OUTPUT);
+		gpio_port_clear_bits(GPIOB, GPIO7);
 	} else {
-		gpio_mode_setup(GPIOB, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO7);
+		gpio_pin_configure(gpio, 7, GPIO_INPUT);
 	}
 #else
 	BL_UNUSED(enable);
@@ -227,7 +230,7 @@ static inline void bl_led__gpio_set(unsigned led)
 /* Exported function, documented in led.h */
 enum bl_error bl_led_loop(void)
 {
-	gpio_set(GPIOB, GPIO12);
+	gpio_port_set_bits(GPIOB, GPIO12);
 	if (bl_spi_mode == BL_ACQ_SPI_NONE) {
 		bl_led__gpio_clear(bl_led_active);
 	}
@@ -242,7 +245,7 @@ enum bl_error bl_led_loop(void)
 			led_to_send = 0;
 
 		bl_spi_send(bl_led_channel[led_to_send].led);
-		gpio_clear(GPIOB, GPIO12);
+		gpio_port_clear_bits(GPIOB, GPIO12);
 	} else if (bl_spi_mode == BL_ACQ_SPI_NONE) {
 		bl_led__gpio_set(bl_led_active);
 	}

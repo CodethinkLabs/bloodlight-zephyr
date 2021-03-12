@@ -20,7 +20,7 @@
 
 #include "../mq.h"
 
-#include <libopencm3/stm32/gpio.h>
+#include <drivers/gpio.h>
 #include <libopencm3/stm32/adc.h>
 
 typedef struct
@@ -238,8 +238,9 @@ void bl_acq_source_enable(enum bl_acq_source source)
 	}
 
 	if (src->gpio_port != 0) {
-		gpio_mode_setup(src->gpio_port, GPIO_MODE_ANALOG,
-				GPIO_PUPD_NONE, (1U << src->gpio_pin));
+		const struct device * gpio;
+		gpio = device_get_binding(DT_LABEL(DT_NODELABEL(src->gpio_port)));
+		gpio_pin_configure(gpio, src->gpio_pin, GPIO_INT_DISABLE | GPIO_INPUT);
 	}
 
 	const bl_acq_source_config_t *config = &src->config;

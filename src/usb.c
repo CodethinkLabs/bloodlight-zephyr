@@ -20,7 +20,7 @@
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/stm32/rcc.h>
-#include <libopencm3/stm32/gpio.h>
+#include <drivers/gpio.h>
 
 #if (BL_REVISION >= 2)
 #include <libopencm3/stm32/crs.h>
@@ -286,17 +286,19 @@ static void bl_usb__setup(void)
 	rcc_periph_clock_enable(RCC_GPIOB);
 
 	/* Enable pull-up control. */
-	gpio_mode_setup(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO4);
-	gpio_set(GPIOB, GPIO4);
+	gpiob = device_get_binding(DT_LABEL(DT_NODELABEL(GPIOB)));
+	gpio_pin_configure(gpiob, 4, GPIO_PUPD_NONE | GPIO_OUTPUT);
+	gpio_port_set_bits(gpiob, 4);
 #endif
 
 	/* Setup GPIO pins for USB D+/D-. */
+	gpioa = device_get_binding(DT_LABEL(DT_NODELABEL(GPIOA)));
 #if (BL_REVISION == 1)
-	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO11 | GPIO12);
-	gpio_set_af(GPIOA, GPIO_AF14, GPIO11 | GPIO12);
+	gpio_stm32_configure(gpioa->config->base, 11, GPIO_PUPD_NONE, 14);
+	gpio_stm32_configure(gpioa->config->base, 12, GPIO_PUPD_NONE, 14);
 #else
-	gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG,
-			GPIO_PUPD_NONE, GPIO11 | GPIO12);
+	gpio_pin_configure(gpioa, 11, GPIO_PUPD_NONE | GPIO_MODE_ANALOG);
+	gpio_pin_configure(gpioa, 12, GPIO_PUPD_NONE | GPIO_MODE_ANALOG);
 #endif
 
 }

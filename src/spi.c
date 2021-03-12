@@ -15,7 +15,7 @@
  */
 
 #include <libopencm3/stm32/rcc.h>
-#include <libopencm3/stm32/gpio.h>
+#include <drivers/gpio.h>
 #include <libopencm3/stm32/spi.h>
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/stm32/dma.h>
@@ -94,6 +94,7 @@ DMA_CHANNEL_ISR(1, 7);
 
 #define SPI_SR_FTLVL	SPI_SR_FTLVL_FIFO_FULL
 #define SPI_SR_FRLVL	SPI_SR_FRLVL_FIFO_FULL
+#define AF5 5
 static void bl_spi__setup(void)
 {
 	rcc_periph_clock_enable(RCC_SPI2);
@@ -104,9 +105,13 @@ static void bl_spi__setup(void)
 
 	/* Setup GPIO pins for AF5 for SPI2 signals. */
 
-	gpio_mode_setup(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLDOWN,
-			GPIO13 | GPIO14 | GPIO15);
-	gpio_set_af(GPIOB, GPIO_AF5, GPIO13 | GPIO14 | GPIO15);
+	const struct device * gpio;
+	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(GPIOB)));
+	gpio_stm32_configure(gpio->config->base, 13 , GPIO_PULL_DOWN, 5);
+	gpio_stm32_configure(gpio->config->base, 14, GPIO_PULL_DOWN, 5);
+	gpio_stm32_configure(gpio->config->base, 15, GPIO_PULL_DOWN, 5);
+
+	//gpio_set_af(GPIOB, GPIO_AF5, GPIO13 | GPIO14 | GPIO15); Don't know if with zephyr APIs we need a set
 
 	/* Disable SPI before reset it
 	 * Follow the procedure of disabling SPI documented
@@ -137,14 +142,13 @@ static void bl_spi__setup(void)
 		/* Software NSS was used for SPI, and GPIO12 is used
 		 * as generic GPIO to indicate LED flash
 		 */
-		gpio_mode_setup(GPIOB, GPIO_MODE_INPUT,
-						GPIO_PUPD_PULLDOWN, GPIO12);
+		gpio_pin_configure(gpio, 12, GPIO_INPUT | GPIO_PULL_DOWN);
+
 
 		spi_set_nss_low(SPI2);
 		spi_set_slave_mode(SPI2);
 	} else if (bl_spi_mode == BL_ACQ_SPI_MOTHER) {
-		gpio_mode_setup(GPIOB, GPIO_MODE_OUTPUT,
-						GPIO_PUPD_PULLDOWN, GPIO12);
+		gpio_pin_configure(gpio, 12, GPIO_OUTPUT | GPIO_PULL_DOWN);
 
 		spi_set_nss_high(SPI2);
 		spi_set_master_mode(SPI2);
@@ -232,8 +236,8 @@ void bl_spi_daughter_poll(void)
 		to_next = true;
 	}
 	if (to_next && gpio_get(GPIOB, GPIO12)) {
-		gpio_clear(old_gpioport, old_gpio);
-		gpio_set(gpioport, gpio);
+		gpio_port_clear_bits(old_gpioport, old_gpio);
+		gpio_port_set_bits(gpioport, gpio);
 		old_gpioport = gpioport;
 		old_gpio = gpio;
 		to_next = false;
