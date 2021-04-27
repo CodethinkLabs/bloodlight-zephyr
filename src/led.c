@@ -154,8 +154,14 @@ static inline void bl_led__set(
 	 * 2. Making bl_led_init() cache the clear masks so they can be reused
 	 *    here.
 	 */
-	gpio_port_set_masked(led_port[port], bl_led__get_pin_mask(port, 0xffff), '0');
-	gpio_port_set_masked(led_port[port], bl_led__get_pin_mask(port, led_mask), '1');
+	typedef uint32_t gpio_port_pins_t;
+	const struct device * gpio;
+
+	gpio_port_pins_t pinmask = bl_led__get_pin_mask(port, 0xffff);
+	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(GPIOB)));
+	gpio_port_set_masked(gpio, pinmask, 0);
+	pinmask = bl_led__get_pin_mask(port, led_mask);
+	gpio_port_set_masked(gpio, pinmask, 1);
 }
 
 /* Exported function, documented in led.h */
@@ -175,7 +181,7 @@ void bl_led_status_set(bool enable)
 	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(GPIOB)));
 	if (enable) {
 		gpio_pin_configure(gpio, 7, GPIO_OUTPUT);
-		gpio_port_clear_bits(GPIOB, GPIO7);
+		gpio_port_clear_bits(gpio, GPIO7);
 	} else {
 		gpio_pin_configure(gpio, 7, GPIO_INPUT);
 	}
@@ -231,7 +237,10 @@ static inline void bl_led__gpio_set(unsigned led)
 /* Exported function, documented in led.h */
 enum bl_error bl_led_loop(void)
 {
-	gpio_port_set_bits(GPIOB, GPIO12);
+	const struct device * gpio;
+
+	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(GPIOB)));
+	gpio_port_set_bits(gpio, GPIO12);
 	//Commented to avoid depending on spi, to be uncommented
 	/*if (bl_spi_mode == BL_ACQ_SPI_NONE) {
 		bl_led__gpio_clear(bl_led_active);
@@ -248,7 +257,7 @@ enum bl_error bl_led_loop(void)
 			led_to_send = 0;
 
 		bl_spi_send(bl_led_channel[led_to_send].led);
-		gpio_port_clear_bits(GPIOB, GPIO12);
+		gpio_port_clear_bits(gpio, GPIO12);
 	} else if (bl_spi_mode == BL_ACQ_SPI_NONE) {
 		bl_led__gpio_set(bl_led_active);
 	}*/
