@@ -17,7 +17,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <libopencm3/stm32/rcc.h>
+#include <drivers/clock_control.h>
 #include <drivers/gpio.h>
 
 #include "common/error.h"
@@ -133,9 +133,13 @@ static inline void bl_led__gpio_mode_setup(enum led_port port)
 /* Exported function, documented in led.h */
 void bl_led_init(void)
 {
-	rcc_periph_clock_enable(RCC_GPIOA);
-	rcc_periph_clock_enable(RCC_GPIOB);
-	rcc_periph_clock_enable(RCC_GPIOC);
+	const struct device * gpio;
+
+	for (uint8_t port = 0 ; port < sizeof(led_port)/sizeof(led_port[0]); port++) {
+		gpio = device_get_binding(DT_LABEL(DT_NODELABEL(port)));
+		clock_control_subsys_t subsys = gpio -> config;
+		clock_control_on(gpio, subsys);
+	};
 
 	bl_led__gpio_mode_setup(LED_PORT_A);
 	bl_led__gpio_mode_setup(LED_PORT_B);
