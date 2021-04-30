@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.13.1)
 # Re-direct the directory where the 'boards' directory is found from
 # $ZEPHYR_BASE to this directory.
-set(BOARD_ROOT /home/ikerperez/zephyrproject/bloodlight-firmware)
+set(BOARD_ROOT /home/${USER}/zephyrproject/bloodlight-zephyr)
 
 
 
