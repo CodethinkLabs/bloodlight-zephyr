@@ -9,6 +9,6 @@ set(BOARD_ROOT ${CMAKE_CURRENT_LIST_DIR})
 set(BOARD bloodlight_rev2)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(out_of_tree_board)
+project(bloodlight-zephyr)
 
 target_sources(app PRIVATE src/getting_started_test.c)
