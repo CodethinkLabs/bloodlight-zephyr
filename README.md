@@ -25,7 +25,7 @@ This is a work in progress section. Currently, in order to be able to use the bl
 
 ```sh
     cd $ZEPHYR_BASE
-    west build -b bloodlight_rev2 <bloodlight-zephr directory path> -- -DBOARD_ROOT=<bloodlight-zephr directory path>
+    west build <bloodlight-zephr directory path>
 ```
 
 4. Or build with cmake if preferred:
