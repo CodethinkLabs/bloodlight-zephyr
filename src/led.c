@@ -20,7 +20,7 @@
 #include <drivers/clock_control.h>
 #include <drivers/gpio.h>
 
-#include "error.h"
+#include "common/error.h"
 #include "common/util.h"
 #include "common/msg.h"
 
