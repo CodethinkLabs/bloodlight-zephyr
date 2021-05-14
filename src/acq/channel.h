@@ -20,8 +20,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "common/error.h"
-#include "common/channel.h"
+#include "../common/error.h"
+#include "../common/channel.h"
 
 #include "../acq.h"
 
