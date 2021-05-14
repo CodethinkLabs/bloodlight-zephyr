@@ -259,7 +259,7 @@ enum bl_error bl_led_loop(void)
 	const struct device * gpio;
 
 	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpiob)));
-	gpio_port_set_bits(gpio, GPIO12);
+	gpio_port_set_bits(gpio, BIT(12));
 	//Commented to avoid depending on spi, to be uncommented
 	/*if (bl_spi_mode == BL_ACQ_SPI_NONE) {
 		bl_led__gpio_clear(bl_led_active);
