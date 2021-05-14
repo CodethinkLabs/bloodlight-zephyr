@@ -20,7 +20,7 @@
 #include <drivers/clock_control.h>
 #include <drivers/gpio.h>
 
-#include "common/error.h"
+#include "error.h"
 #include "common/util.h"
 #include "common/msg.h"
 
@@ -58,7 +58,7 @@ enum led_port {
 };
 
 /** GPIO port addresses */
-static const uint32_t led_port[] = {
+static const GPIO_TypeDef * led_port[] = {
 	[LED_PORT_A] = GPIOA,
 	[LED_PORT_B] = GPIOB,
 	[LED_PORT_C] = GPIOC,
@@ -123,10 +123,25 @@ static inline uint16_t bl_led__get_pin_mask(
 	return pin_mask;
 }
 
+/** GPIO binding function, needed to avoid variables holding desired node value*/
+static inline void gpio_binding (enum led_port port, const struct device * gpio) {
+	switch (port) {
+		case LED_PORT_A:
+			gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpioa)));
+			break;
+		case LED_PORT_B:
+			gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpiob)));
+			break;
+		case LED_PORT_C:
+			gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpioc)));
+			break;
+	}
+};
+
 static inline void bl_led__gpio_mode_setup(enum led_port port)
 {
 	const struct device * gpio;
-	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(led_port[port])));
+	gpio_binding(port, gpio);
 	gpio_pin_configure(gpio, bl_led__get_pin_mask(port, 0xffff), GPIO_OUTPUT);
 }
 
@@ -136,7 +151,7 @@ void bl_led_init(void)
 	const struct device * gpio;
 
 	for (uint8_t port = 0 ; port < sizeof(led_port)/sizeof(led_port[0]); port++) {
-		gpio = device_get_binding(DT_LABEL(DT_NODELABEL(port)));
+		gpio_binding(port, gpio);
 		clock_control_subsys_t subsys = gpio -> config;
 		clock_control_on(gpio, subsys);
 	};
@@ -162,7 +177,7 @@ static inline void bl_led__set(
 	const struct device * gpio;
 
 	gpio_port_pins_t pinmask = bl_led__get_pin_mask(port, 0xffff);
-	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(GPIOB)));
+	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpiob)));
 	gpio_port_set_masked(gpio, pinmask, 0);
 	pinmask = bl_led__get_pin_mask(port, led_mask);
 	gpio_port_set_masked(gpio, pinmask, 1);
@@ -182,7 +197,7 @@ void bl_led_status_set(bool enable)
 {
 #if (BL_REVISION >= 2)
 	const struct device * gpio;
-	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(GPIOB)));
+	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpiob)));
 	if (enable) {
 		gpio_pin_configure(gpio, 7, GPIO_OUTPUT);
 		gpio_port_clear_bits(gpio, GPIO7);
@@ -243,7 +258,7 @@ enum bl_error bl_led_loop(void)
 {
 	const struct device * gpio;
 
-	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(GPIOB)));
+	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpiob)));
 	gpio_port_set_bits(gpio, GPIO12);
 	//Commented to avoid depending on spi, to be uncommented
 	/*if (bl_spi_mode == BL_ACQ_SPI_NONE) {
