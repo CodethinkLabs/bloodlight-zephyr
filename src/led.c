@@ -124,7 +124,8 @@ static inline uint16_t bl_led__get_pin_mask(
 }
 
 /** GPIO binding function, needed to avoid variables holding desired node value*/
-static inline void gpio_binding (enum led_port port, const struct device * gpio) {
+static inline const struct device * gpio_binding (enum led_port port) {
+	const struct device * gpio;
 	switch (port) {
 		case LED_PORT_A:
 			gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpioa)));
@@ -135,13 +136,16 @@ static inline void gpio_binding (enum led_port port, const struct device * gpio)
 		case LED_PORT_C:
 			gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpioc)));
 			break;
+		default:
+			gpio = NULL; //check NULL
+			break;
 	}
-};
+	return gpio;
+}
 
 static inline void bl_led__gpio_mode_setup(enum led_port port)
 {
-	const struct device * gpio;
-	gpio_binding(port, gpio);
+	const struct device * gpio = gpio_binding(port);
 	gpio_pin_configure(gpio, bl_led__get_pin_mask(port, 0xffff), GPIO_OUTPUT);
 }
 
@@ -151,7 +155,7 @@ void bl_led_init(void)
 	const struct device * gpio;
 
 	for (uint8_t port = 0 ; port < sizeof(led_port)/sizeof(led_port[0]); port++) {
-		gpio_binding(port, gpio);
+		gpio_binding(port);
 		clock_control_subsys_t subsys = gpio -> config;
 		clock_control_on(gpio, subsys);
 	};
@@ -228,7 +232,7 @@ enum bl_error bl_led_setup(uint16_t led_mask)
 		active->src_mask = LED_SRC(bl_acq_channel_get_source(i));
 		active->gpios = LED_BS(led_table[i].pin);
 		active->gpior = LED_BR(led_table[i].pin);
-		active->gpio_bsrr = LED_BSRR(led_port[led_table[i].port_idx]);
+		active->gpio_bsrr = LED_BSRR(led_port[led_table[i].port_idx]->BSRR);
 
 		led_mask &= ~(1U << i);
 
@@ -285,7 +289,7 @@ enum bl_error bl_led_loop(void)
 }
 
 /* Exported function, documented in led.h */
-uint32_t bl_led_get_port(uint8_t led)
+GPIO_TypeDef * bl_led_get_port(uint8_t led)
 {
 	return led_port[led_table[led].port_idx];
 }

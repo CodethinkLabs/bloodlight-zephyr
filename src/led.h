@@ -23,6 +23,8 @@
 #include "common/error.h"
 #include "common/led.h"
 
+#include <drivers/gpio.h>
+
 /** LED source globals */
 typedef struct {
 	uint8_t  led;
@@ -73,7 +75,7 @@ enum bl_error bl_led_loop(void);
  * \param[in]   led LED index to be checked
  * \return \ref GPIO port for specified LED
  */
-uint32_t bl_led_get_port(uint8_t led);
+GPIO_TypeDef * bl_led_get_port(uint8_t led);
 
 /**
  * Get the corresponding GPIO pin number for specified LED
