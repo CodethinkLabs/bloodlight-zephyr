@@ -13,3 +13,16 @@ config SPI_STM32_INTERRUPT
 	depends on SPI
 
 endif
+
+config USB_DEVICE_VID
+	hex "USB Vendor ID"
+	default 0x2fe3
+	depends on USB
+    help
+      USB device vendor ID. MUST be configured by vendor.
+config USB_DEVICE_PID
+	hex "USB Product ID"
+	default 0x0100
+	depends on USB
+    help
+      USB device product ID. MUST be configured by vendor.
