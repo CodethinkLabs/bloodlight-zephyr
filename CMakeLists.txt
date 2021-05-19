@@ -11,4 +11,4 @@ set(BOARD bloodlight_rev2)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(bloodlight-zephyr)
 
-target_sources(app PRIVATE src/led.c)
+target_sources(app PRIVATE src/led_test.c)
