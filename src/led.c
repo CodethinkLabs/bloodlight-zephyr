@@ -26,7 +26,8 @@
 
 #include "led.h"
 #include "acq/channel.h"
-#include "spi.h"
+//Commentend to avoid depending on spi, to be uncommented
+//#include "spi.h"
 #include "acq.h"
 
 #if (BL_REVISION == 1)
@@ -55,6 +56,11 @@ enum led_port {
 	LED_PORT_B,
 	LED_PORT_C,
 };
+
+/* HACK: define GPIOx values to allow build */
+#define GPIOA 1
+#define GPIOB 2
+#define GPIOC 3
 
 /** GPIO port addresses */
 static const uint32_t led_port[] = {
@@ -124,16 +130,20 @@ static inline uint16_t bl_led__get_pin_mask(
 
 static inline void bl_led__gpio_mode_setup(enum led_port port)
 {
+	/*
 	gpio_mode_setup(led_port[port], GPIO_MODE_OUTPUT, GPIO_PUPD_NONE,
 			bl_led__get_pin_mask(port, 0xffff));
+	*/
 }
 
 /* Exported function, documented in led.h */
 void bl_led_init(void)
 {
+	/*
 	rcc_periph_clock_enable(RCC_GPIOA);
 	rcc_periph_clock_enable(RCC_GPIOB);
 	rcc_periph_clock_enable(RCC_GPIOC);
+	*/
 
 	bl_led__gpio_mode_setup(LED_PORT_A);
 	bl_led__gpio_mode_setup(LED_PORT_B);
@@ -152,8 +162,10 @@ static inline void bl_led__set(
 	 * 2. Making bl_led_init() cache the clear masks so they can be reused
 	 *    here.
 	 */
+	/*
 	gpio_clear(led_port[port], bl_led__get_pin_mask(port, 0xffff));
 	gpio_set(led_port[port], bl_led__get_pin_mask(port, led_mask));
+	*/
 }
 
 /* Exported function, documented in led.h */
@@ -170,10 +182,14 @@ void bl_led_status_set(bool enable)
 {
 #if (BL_REVISION >= 2)
 	if (enable) {
+		/*
 		gpio_mode_setup(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO7);
 		gpio_clear(GPIOB, GPIO7);
+		*/
 	} else {
+		/*
 		gpio_mode_setup(GPIOB, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO7);
+		*/
 	}
 #else
 	BL_UNUSED(enable);
@@ -227,16 +243,20 @@ static inline void bl_led__gpio_set(unsigned led)
 /* Exported function, documented in led.h */
 enum bl_error bl_led_loop(void)
 {
+	/*
 	gpio_set(GPIOB, GPIO12);
-	if (bl_spi_mode == BL_ACQ_SPI_NONE) {
+	*/
+	//Commented to avoid depending on spi, to be uncommented
+	/*if (bl_spi_mode == BL_ACQ_SPI_NONE) {
 		bl_led__gpio_clear(bl_led_active);
-	}
+	}*/
 
 	bl_led_active++;
 	if (bl_led_active >= bl_led_count)
 		bl_led_active = 0;
 
-	if (bl_spi_mode == BL_ACQ_SPI_MOTHER) {
+	//Commented to avoid depending on spi, to be uncommented
+	/*if (bl_spi_mode == BL_ACQ_SPI_MOTHER) {
 		unsigned led_to_send = bl_led_active + 1;
 		if (led_to_send >= bl_led_count)
 			led_to_send = 0;
@@ -245,7 +265,7 @@ enum bl_error bl_led_loop(void)
 		gpio_clear(GPIOB, GPIO12);
 	} else if (bl_spi_mode == BL_ACQ_SPI_NONE) {
 		bl_led__gpio_set(bl_led_active);
-	}
+	}*/
 
 	return BL_ERROR_NONE;
 }
