@@ -13,3 +13,7 @@ config SPI_STM32_INTERRUPT
 	depends on SPI
 
 endif
+
+config PRINTK
+    bool "Send printk() to console"
+    default y
