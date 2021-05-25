@@ -72,11 +72,6 @@ enum led_port {
 	LED_PORT_C,
 };
 
-/* HACK: define GPIOx values to allow build */
-#define GPIOA 1
-#define GPIOB 2
-#define GPIOC 3
-
 /** GPIO port addresses */
 static const GPIO_TypeDef * led_port[] = {
 	[LED_PORT_A] = GPIOA,
