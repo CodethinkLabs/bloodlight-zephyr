@@ -18,3 +18,8 @@ target_sources(app PRIVATE
     main.c
     ../../src/led.c
 )
+
+add_compile_definitions(
+    BL_REVISION=2
+    REVISION=2
+)
