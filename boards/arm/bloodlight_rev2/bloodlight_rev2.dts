@@ -86,7 +86,7 @@
 			label = "User LD16";
 		};
 		status_led: led_17 {
-			gpios = <&gpiob 7 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpiob 7 GPIO_ACTIVE_LOW>;
 			label = "User LD17 STATUS";
 		};
 	};
@@ -113,6 +113,7 @@
 
 	aliases {
 		led0 = &blue_led;
+		statusled = &status_led;
 	};
 };
 
