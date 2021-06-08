@@ -167,14 +167,35 @@ static inline const struct device * gpio_binding (enum led_port port) {
 	return gpio;
 }
 
-static inline void bl_led__gpio_mode_setup(enum led_port port)
+
+
+static inline void bl_led__gpio_mode_setup()
 {
-	const struct device * gpio = gpio_binding(port);
-	if (gpio == NULL) {
-		printk("GPIOB binding error\n");
-	}
-	if (gpio_pin_configure(gpio, bl_led__get_pin_mask(port, 0xffff), GPIO_OUTPUT) !=0){
-		printk("Error configuring port=%d\n", port);
+	//Get the gpio bindings
+	const struct device * gpioa = gpio_binding(LED_PORT_A);
+	const struct device * gpiob = gpio_binding(LED_PORT_B);
+	const struct device * gpioc = gpio_binding(LED_PORT_C);
+
+	//Configure the pins connected to leds as output.
+	for (int led = 0; led < BL_LED_COUNT ; led++) {
+		switch (led_table[led].port_idx){
+		case LED_PORT_A:
+				if (gpio_pin_configure(gpioa, led_table[led].pin, GPIO_OUTPUT) !=0){
+					printk("Error configuring port\n");
+				}
+				break;
+		case LED_PORT_B:
+				if (gpio_pin_configure(gpiob, led_table[led].pin, GPIO_OUTPUT) !=0){
+					printk("Error configuring port\n");
+				}
+				break;
+		case LED_PORT_C:
+				if (gpio_pin_configure(gpioc, led_table[led].pin, GPIO_OUTPUT) !=0){
+					printk("Error configuring port\n");
+				}
+				break;
+		}
+
 	}
 }
 
@@ -189,12 +210,8 @@ void bl_led_init(void)
 			printk("Error: Can't turn clock on\n");
 		}
 	};
-	printk("PORT A setup\n");
-	bl_led__gpio_mode_setup(LED_PORT_A);
-	printk("PORT B setup\n");
-	bl_led__gpio_mode_setup(LED_PORT_B);
-	printk("PORT C setup\n");
-	bl_led__gpio_mode_setup(LED_PORT_C);
+
+	bl_led__gpio_mode_setup();
 
 	bl_led_set(0x0000);
 }
