@@ -34,6 +34,11 @@ typedef struct {
 	uint32_t gpio_bsrr;
 } bl_led_channel_t;
 
+enum led_port {
+	LED_PORT_A,
+	LED_PORT_B,
+	LED_PORT_C,
+};
 
 extern unsigned bl_led_count;
 extern volatile unsigned bl_led_active;
@@ -85,5 +90,12 @@ const GPIO_TypeDef * bl_led_get_port(uint8_t led);
  */
 uint16_t bl_led_get_gpio(uint8_t led);
 
+/**
+ * Get the corresponding GPIO port device binding for the specified enum led_port value
+ *
+ * \param[in]   port Desired gpio port's enum led_port value
+ * \return \ref GPIO port device binding
+ */
+const struct device * gpio_binding (enum led_port port);
 
 #endif

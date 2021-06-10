@@ -65,12 +65,12 @@ unsigned bl_led_count;
 volatile unsigned bl_led_active;
 bl_led_channel_t bl_led_channel[BL_LED_COUNT];
 
-/** GPIO ports used for LEDs */
+/** GPIO ports used for LEDs *//*
 enum led_port {
 	LED_PORT_A,
 	LED_PORT_B,
 	LED_PORT_C,
-};
+};*/
 
 /** GPIO port addresses */
 static const GPIO_TypeDef * led_port[] = {
@@ -139,7 +139,7 @@ static inline uint16_t bl_led__get_pin_mask(
 }
 
 /** GPIO binding function, needed to avoid variables holding desired node value*/
-static inline const struct device * gpio_binding (enum led_port port) {
+const struct device * gpio_binding (enum led_port port) {
 	const struct device * gpio;
 	switch (port) {
 		case LED_PORT_A:

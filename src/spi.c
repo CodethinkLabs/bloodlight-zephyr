@@ -223,6 +223,8 @@ void bl_spi_daughter_poll(void)
 	static uint32_t gpioport, old_gpioport;
 	static uint16_t gpio, old_gpio;
 	static bool to_next = false;
+	const struct device * oldgpio_binding;
+	const struct device * gpio_binding;
 
 	if (SPI_SR(SPI2) & SPI_SR_RXNE) {
 		bl_spi_mode = BL_ACQ_SPI_DAUGHTER;
@@ -232,8 +234,10 @@ void bl_spi_daughter_poll(void)
 		to_next = true;
 	}
 	if (to_next && gpio_get(GPIOB, GPIO12)) {
-		gpio_clear(old_gpioport, old_gpio);
-		gpio_set(gpioport, gpio);
+		gpio_binding = gpio_binding(gpioport);
+		oldgpio_binding= gpio_binding(old_gpioport);
+		gpio_port_clear_bits(oldgpio_binding, old_gpio);
+		gpio_port_set_bits(gpio_binding, gpio);
 		old_gpioport = gpioport;
 		old_gpio = gpio;
 		to_next = false;
