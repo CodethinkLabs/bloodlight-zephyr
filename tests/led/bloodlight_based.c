@@ -10,6 +10,8 @@
 #include <drivers/uart.h>
 
 #include <drivers/gpio.h>
+#include "../../common/led.h"
+#include <sys/__assert.h>
 
 #define SLEEP_TIME_MS   1000
 #define LOOPS 10
@@ -50,8 +52,71 @@ void main (void) {
 		return;
 	}
 
-	printf("*****Starting LED APIs tests****\n");
-	printf("Testing bl_led_status_set()\n");
+	printf("\n*****Starting LED APIs tests****\n");
+
+	printf("\nTesting bl_led_get_port\n");
+	for (int led = 0; led < BL_LED_COUNT; led++){
+		switch (led)
+		{
+		#if (BL_REVISION == 1)
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+				__ASSERT(((GPIO_TypeDef *) GPIOA_BASE) == bl_led_get_port(led), "Invalid port value in led %i\n", led);
+				break;
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+			case 11:
+			case 12:
+			case 13:
+			case 14:
+			case 15:
+				__ASSERT(((GPIO_TypeDef *) GPIOB_BASE) == bl_led_get_port(led), "Invalid port value in led %i\n", led);
+				break;
+			case 8:
+			case 9:
+			case 10:
+				__ASSERT(((GPIO_TypeDef *) GPIOC_BASE) == bl_led_get_port(led), "Invalid port value in led %i\n", led);
+				break;
+		#else
+			case 1:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 11:
+			case 13:
+			case 14:
+			case 15:
+				__ASSERT(((GPIO_TypeDef *) GPIOA_BASE) == bl_led_get_port(led), "Invalid port value in led %i\n", led);
+					break;
+				}
+			case 2:
+			case 9:
+			case 10:
+			case 12:
+				__ASSERT(((GPIO_TypeDef *) GPIOB_BASE) == bl_led_get_port(led), "Invalid port value in led %i\n", led);
+				break;
+			case 0:
+			case 3:
+			case 8:
+				__ASSERT(((GPIO_TypeDef *) GPIOC_BASE) == bl_led_get_port(led), "Invalid port value in led %i\n", led);
+				break;
+		#endif
+		}
+	}
+
+
+
+	printf("\nTesting bl_led_get_gpio\n");
+	for (int led = 0; led < BL_LED_COUNT; led++){
+		printf("LED %d port is %d\n", led, bl_led_get_gpio(led));
+	}
+
+	printf("\nTesting bl_led_status_set()\n");
 	 for (int i = 0 ; i < LOOPS ; i++){
 		bl_led_status_set(true);
 		k_msleep(SLEEP_TIME_MS);
@@ -61,7 +126,7 @@ void main (void) {
 
 	bl_led_init();
 
-	printf("Testing bl_led_set()\n");
+	printf("\nTesting bl_led_set()\n");
 	 for (int i = 0 ; i < LOOPS ; i++){
 		bl_led_set(0xffff);
 		k_msleep(SLEEP_TIME_MS);
