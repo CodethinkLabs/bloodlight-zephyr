@@ -93,7 +93,6 @@ void main (void) {
 			case 15:
 				__ASSERT(((GPIO_TypeDef *) GPIOA_BASE) == bl_led_get_port(led), "Invalid port value in led %i\n", led);
 					break;
-				}
 			case 2:
 			case 9:
 			case 10:
@@ -108,15 +107,117 @@ void main (void) {
 		#endif
 		}
 	}
-
+		printf("\nSuccess testing bl_led_get_port\n");
 
 
 	printf("\nTesting bl_led_get_gpio\n");
 	for (int led = 0; led < BL_LED_COUNT; led++){
-		printf("LED %d port is %d\n", led, bl_led_get_gpio(led));
+		switch (led)
+		{
+		#if (BL_REVISION == 1)
+			case 0:
+				__ASSERT((1U << 1) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 1:
+				__ASSERT((1U << 2) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 2:
+				__ASSERT((1U << 10) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 3:
+				__ASSERT((1U << 11) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 4:
+				__ASSERT((1U << 8) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 5:
+				__ASSERT((1U << 9) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 6:
+				__ASSERT((1U << 10) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 7:
+				__ASSERT((1U << 15) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 8:
+				__ASSERT((1U << 13) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 9:
+				__ASSERT((1U << 14) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 10:
+				__ASSERT((1U << 15) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 11:
+				__ASSERT((1U << 9) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 12:
+				__ASSERT((1U << 8) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 13:
+				__ASSERT((1U << 7) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 14:
+				__ASSERT((1U << 6) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 15:
+				__ASSERT((1U << 5) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+		#else
+			case 0:
+				__ASSERT((1U << 14) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 1:
+				__ASSERT((1U << 10) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 2:
+				__ASSERT((1U << 11) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 3:
+				__ASSERT((1U << 13) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 4:
+				__ASSERT((1U << 6) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 5:
+				__ASSERT((1U << 8) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 6:
+				__ASSERT((1U << 9) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 7:
+				__ASSERT((1U << 5) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 8:
+				__ASSERT((1U << 15) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 9:
+				__ASSERT((1U << 6) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 10:
+				__ASSERT((1U << 5) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 11:
+				__ASSERT((1U << 0) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 12:
+				__ASSERT((1U << 4) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 13:
+				__ASSERT((1U << 15) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 14:
+				__ASSERT((1U << 1) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+			case 15:
+				__ASSERT((1U << 2) == bl_led_get_gpio(led), "Invalid pin value in led %i\n", led);
+				break;
+		#endif
+		}
 	}
+	printf("\nSuccess testing bl_led_get_gpio\n");
 
-	printf("\nTesting bl_led_status_set()\n");
+	printf("\nTesting bl_led_status_set(), please check for a red led blinking\n");
 	 for (int i = 0 ; i < LOOPS ; i++){
 		bl_led_status_set(true);
 		k_msleep(SLEEP_TIME_MS);
@@ -126,7 +227,7 @@ void main (void) {
 
 	bl_led_init();
 
-	printf("\nTesting bl_led_set()\n");
+	printf("\nTesting bl_led_set(), please check for all leds blinking\n");
 	 for (int i = 0 ; i < LOOPS ; i++){
 		bl_led_set(0xffff);
 		k_msleep(SLEEP_TIME_MS);
