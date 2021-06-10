@@ -17,10 +17,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// #include <libopencm3/stm32/rcc.h>
-// #include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/rcc.h>
+#include <drivers/gpio.h>
 
-#include "common/error.h"
+#include "error.h"
 #include "common/util.h"
 #include "common/msg.h"
 
@@ -46,6 +46,21 @@
 #define LED_BR(pin)    (LED_BS(pin) << 16)
 #define LED_BSRR(port) ((port) + 0x18)
 
+/* The devicetree node identifier for the "led0" alias. */
+#define STATUS_NODE DT_ALIAS(statusled)
+
+#if DT_NODE_HAS_STATUS(STATUS_NODE, okay)
+#define STATUS_LED    DT_GPIO_LABEL(STATUS_NODE, gpios)
+#define STATUS_PIN     DT_GPIO_PIN(STATUS_NODE, gpios)
+#define STATUS_FLAGS   DT_GPIO_FLAGS(STATUS_NODE, gpios)
+#else
+/* A build error here means your board isn't set up to blink an LED. */
+#error "Unsupported board: statusled devicetree alias is not defined"
+#define STATUS_LED    ""
+#define STATUS_PIN     0
+#define STATUS_FLAGS   0
+#endif
+
 unsigned bl_led_count;
 volatile unsigned bl_led_active;
 bl_led_channel_t bl_led_channel[BL_LED_COUNT];
@@ -63,7 +78,7 @@ enum led_port {
 #define GPIOC 3
 
 /** GPIO port addresses */
-static const uint32_t led_port[] = {
+static const GPIO_TypeDef * led_port[] = {
 	[LED_PORT_A] = GPIOA,
 	[LED_PORT_B] = GPIOB,
 	[LED_PORT_C] = GPIOC,
@@ -128,12 +143,44 @@ static inline uint16_t bl_led__get_pin_mask(
 	return pin_mask;
 }
 
+/** GPIO binding function, needed to avoid variables holding desired node value*/
+static inline const struct device * gpio_binding (enum led_port port) {
+	const struct device * gpio;
+	switch (port) {
+		case LED_PORT_A:
+			gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpioa)));
+			if (gpio == NULL) {
+				printk("GPIOA binding error\n");
+			}
+			break;
+		case LED_PORT_B:
+			gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpiob)));
+			if (gpio == NULL) {
+				printk("GPIOB binding error\n");
+			}
+			break;
+		case LED_PORT_C:
+			gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpioc)));
+			if (gpio == NULL) {
+				printk("GPIOC binding error\n");
+			}
+			break;
+		default:
+			gpio = NULL; //check NULL
+			break;
+	}
+	return gpio;
+}
+
 static inline void bl_led__gpio_mode_setup(enum led_port port)
 {
-	/*
-	gpio_mode_setup(led_port[port], GPIO_MODE_OUTPUT, GPIO_PUPD_NONE,
-			bl_led__get_pin_mask(port, 0xffff));
-	*/
+	const struct device * gpio = gpio_binding(port);
+	if (gpio == NULL) {
+		printk("GPIOB binding error\n");
+	}
+	if (gpio_pin_configure(gpio, bl_led__get_pin_mask(port, 0xffff), GPIO_OUTPUT) !=0){
+		printk("Error configuring port=%d\n", port);
+	}
 }
 
 /* Exported function, documented in led.h */
@@ -144,9 +191,19 @@ void bl_led_init(void)
 	rcc_periph_clock_enable(RCC_GPIOB);
 	rcc_periph_clock_enable(RCC_GPIOC);
 	*/
+	for (uint8_t port = 0 ; port < sizeof(led_port)/sizeof(led_port[0]); port++) {
+		const struct device * gpio = gpio_binding(port);
 
+		const clock_control_subsys_t *subsys = gpio -> config;
+		if (clock_control_on(gpio, *subsys) < 0) {
+			printk("Error: Can't turn clock on\n");
+		}
+	};
+	printk("PORT A setup\n");
 	bl_led__gpio_mode_setup(LED_PORT_A);
+	printk("PORT B setup\n");
 	bl_led__gpio_mode_setup(LED_PORT_B);
+	printk("PORT C setup\n");
 	bl_led__gpio_mode_setup(LED_PORT_C);
 
 	bl_led_set(0x0000);
@@ -162,10 +219,14 @@ static inline void bl_led__set(
 	 * 2. Making bl_led_init() cache the clear masks so they can be reused
 	 *    here.
 	 */
-	/*
-	gpio_clear(led_port[port], bl_led__get_pin_mask(port, 0xffff));
-	gpio_set(led_port[port], bl_led__get_pin_mask(port, led_mask));
-	*/
+	typedef uint32_t gpio_port_pins_t;
+	const struct device * gpio;
+
+	gpio_port_pins_t pinmask = bl_led__get_pin_mask(port, 0xffff);
+	gpio = gpio_binding(port);
+	gpio_port_set_masked(gpio, pinmask, 0);
+	pinmask = bl_led__get_pin_mask(port, led_mask);
+	gpio_port_set_masked(gpio, pinmask, 0xffff);
 }
 
 /* Exported function, documented in led.h */
@@ -181,15 +242,23 @@ enum bl_error bl_led_set(uint16_t led_mask)
 void bl_led_status_set(bool enable)
 {
 #if (BL_REVISION >= 2)
+	const struct device * gpio;
+
+	gpio=device_get_binding(STATUS_LED);
+	if (gpio == NULL) {
+		return;
+	}
+
 	if (enable) {
-		/*
-		gpio_mode_setup(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO7);
-		gpio_clear(GPIOB, GPIO7);
-		*/
+		if (gpio_pin_configure(gpio, STATUS_PIN, GPIO_OUTPUT_LOW | STATUS_FLAGS) < 0) {
+			printk("Error: failed to enable status pin\n");
+			return;
+		}
 	} else {
-		/*
-		gpio_mode_setup(GPIOB, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO7);
-		*/
+		if (gpio_pin_configure(gpio, STATUS_PIN, GPIO_INPUT | STATUS_FLAGS) < 0) {
+			printk("Error: failed to disable status pin\n");
+			return;
+		}
 	}
 #else
 	BL_UNUSED(enable);
@@ -215,7 +284,7 @@ enum bl_error bl_led_setup(uint16_t led_mask)
 		active->src_mask = LED_SRC(bl_acq_channel_get_source(i));
 		active->gpios = LED_BS(led_table[i].pin);
 		active->gpior = LED_BR(led_table[i].pin);
-		active->gpio_bsrr = LED_BSRR(led_port[led_table[i].port_idx]);
+		active->gpio_bsrr = LED_BSRR(led_port[led_table[i].port_idx]->BSRR);
 
 		led_mask &= ~(1U << i);
 
@@ -243,9 +312,14 @@ static inline void bl_led__gpio_set(unsigned led)
 /* Exported function, documented in led.h */
 enum bl_error bl_led_loop(void)
 {
-	/*
-	gpio_set(GPIOB, GPIO12);
-	*/
+	const struct device * gpio;
+
+	gpio = device_get_binding(DT_LABEL(DT_NODELABEL(gpiob)));
+	if (gpio_pin_configure(gpio, 12, GPIO_OUTPUT | STATUS_FLAGS) < 0) {
+		printk("Error: failed to configure pin 12\n");
+		return BL_ERROR_HARDWARE_CONFLICT;
+	}
+	gpio_port_set_bits(gpio, 12);
 	//Commented to avoid depending on spi, to be uncommented
 	/*if (bl_spi_mode == BL_ACQ_SPI_NONE) {
 		bl_led__gpio_clear(bl_led_active);
@@ -262,7 +336,7 @@ enum bl_error bl_led_loop(void)
 			led_to_send = 0;
 
 		bl_spi_send(bl_led_channel[led_to_send].led);
-		gpio_clear(GPIOB, GPIO12);
+		gpio_port_clear_bits(gpio, GPIO12);
 	} else if (bl_spi_mode == BL_ACQ_SPI_NONE) {
 		bl_led__gpio_set(bl_led_active);
 	}*/
@@ -271,7 +345,7 @@ enum bl_error bl_led_loop(void)
 }
 
 /* Exported function, documented in led.h */
-uint32_t bl_led_get_port(uint8_t led)
+const GPIO_TypeDef * bl_led_get_port(uint8_t led)
 {
 	return led_port[led_table[led].port_idx];
 }
