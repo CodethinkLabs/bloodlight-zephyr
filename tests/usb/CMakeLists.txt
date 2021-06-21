@@ -16,7 +16,7 @@ project(led_test)
 
 target_sources(app PRIVATE 
     test_usb.c
-    ../../src/usb.c
+   # ../../src/usb.c
 )
 
 add_compile_definitions(

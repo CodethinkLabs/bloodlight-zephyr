@@ -9,6 +9,7 @@
 #include <usb/usb_device.h>
 #include <drivers/uart.h>
 #include <ztest.h>
+#include <drivers/usb/usb_dc.h>
 
 #define SLEEP_TIME_MS   1000
 #define LOOPS 10
@@ -35,4 +36,11 @@ void main (void) {
 
 		return;
 	}
+
+	struct usb_ep_cfg_data data {
+
+	};
+	int ret;
+	usb_dc_status_callback status;
+	ret = usb_enable(status);
 };
