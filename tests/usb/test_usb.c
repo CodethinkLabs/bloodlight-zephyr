@@ -1,25 +1,29 @@
-#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <devicetree.h>
 #include <zephyr.h>
-#include <sys/printk.h>
-#include <sys/util.h>
 #include <string.h>
-#include <usb/usb_device.h>
+
+#include <logging/log.h>
 #include <drivers/uart.h>
-#include <ztest.h>
-#include <drivers/usb/usb_dc.h>
+#include <usb/usb_device.h>
+#include <sys/ring_buffer.h>
+
 
 #define SLEEP_TIME_MS   1000
 #define LOOPS 10
-
+uint8_t ring_buffer[1024];
 
 void main (void) {
-	const struct device *dev = device_get_binding(
-			CONFIG_UART_CONSOLE_ON_DEV_NAME);
 	uint32_t dtr = 0;
+	const struct device *dev;
+	struct ring_buf ringbuf;
 
+	dev = device_get_binding("CDC_ACM_0");
+	if (!dev) {
+		//LOG_ERR("CDC ACM device not found");
+		return;
+	}
+	
 	if (usb_enable(NULL)) {
 		return;
 	}
@@ -27,20 +31,22 @@ void main (void) {
 	while (!dtr) {
 		uart_line_ctrl_get(dev, UART_LINE_CTRL_DTR, &dtr);
 	}
+	printf("pruebaaaaaaaaaaaaaaaaaaaaaaaa\n");
+	ring_buf_init(&ringbuf, sizeof(ring_buffer), ring_buffer);
 
-	if (strlen(CONFIG_UART_CONSOLE_ON_DEV_NAME) !=
-		strlen("CDC_ACM_0") ||
-	    strncmp(CONFIG_UART_CONSOLE_ON_DEV_NAME, "CDC_ACM_0",
-		strlen(CONFIG_UART_CONSOLE_ON_DEV_NAME))) {
-			printk("Error: Console device name is not USB ACM\n");
+	uart_irq_tx_enable(dev);
+	if (uart_irq_tx_ready(dev)) {
+		uint8_t buffer[64]= {0,1,2,3,4,5,6,7};;
+		int send_len;
 
-		return;
+		//buffer = {0,1,2,3,4,5,6,7};
+
+		send_len = uart_fifo_fill(dev, buffer, sizeof(buffer));
+		if (send_len < sizeof(buffer)) {
+			//LOG_ERR("Drop %d bytes", rb_len - send_len);
+		}
+
+		//LOG_DBG("ringbuf -> tty fifo %d bytes", send_len);
 	}
-
-	struct usb_ep_cfg_data data {
-
-	};
-	int ret;
-	usb_dc_status_callback status;
-	ret = usb_enable(status);
-};
+	
+}
