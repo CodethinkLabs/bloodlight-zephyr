@@ -16,3 +16,5 @@ supported:
   - spi
   - watchdog
   - adc
+testing:
+  default: true
