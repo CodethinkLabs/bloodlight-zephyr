@@ -33,3 +33,8 @@ target_sources(app PRIVATE
 #    src/acq/source.c
 #    src/acq/timer.c
 )
+
+add_compile_definitions(
+    BL_REVISION=2
+    REVISION=2
+)

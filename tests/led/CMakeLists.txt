@@ -15,6 +15,11 @@ zephyr_include_directories(${CMAKE_SOURCE_DIR}/../..)
 project(led_test)
 
 target_sources(app PRIVATE 
-    main.c
+    bloodlight_based.c
     ../../src/led.c
+)
+
+add_compile_definitions(
+    BL_REVISION=2
+    REVISION=2
 )

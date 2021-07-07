@@ -14,6 +14,11 @@ config SPI_STM32_INTERRUPT
 
 endif
 
+
+config PRINTK
+    bool "Send printk() to console"
+    default y
+
 config USB_DEVICE_VID
 	hex "USB Vendor ID"
 	default 0x0483
@@ -26,3 +31,4 @@ config USB_DEVICE_PID
 	depends on USB
     help
       USB device product ID. MUST be configured by vendor.
+
