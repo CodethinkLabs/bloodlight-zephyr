@@ -1,17 +1,17 @@
+#include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <devicetree.h>
 #include <zephyr.h>
-#include <sys/printk.h>
-#include <sys/util.h>
 #include <string.h>
-#include <usb/usb_device.h>
-#include <drivers/uart.h>
-
-#include <drivers/gpio.h>
-#include "../../common/led.h"
+#include <devicetree.h>
+#include <sys/util.h>
+#include <sys/printk.h>
 #include <sys/__assert.h>
+#include <drivers/uart.h>
+#include <drivers/gpio.h>
+#include <usb/usb_device.h>
+#include "../../common/led.h"
+#include "../../src/led.h"
 
 #define SLEEP_TIME_MS   1000
 #define LOOPS 10
