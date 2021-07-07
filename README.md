@@ -14,7 +14,8 @@ This is a work in progress section. Currently, in order to be able to use the bl
 ```
 
   Example of the Zephyr environment variable settings:
-```
+
+```sh
     export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
     export ZEPHYR_SDK_INSTALL_DIR="/opt/zephyr-sdk/"
     export ZEPHYR_BASE=/home/rdale/projects/co054/src/zephyrproject/zephyr
@@ -54,3 +55,19 @@ Now you can run some basic tests to make sure the LEDs and USB work:
 The idea is to have a `Zephyr` out of tree app. To achieve this we will first need to establish a connection between our board support files and zephyr and then between our app and zephyr.
 
 The second task won't be hard, but the first one it might be a bit more tricky, since so far I haven't found an example of a running app that uses a board that is not supported by zephyr.
+
+## Testing
+
+In order to test all the available test for this project execute the next:
+
+```sh
+    cd $ZEPHYR_BASE
+    ./scripts/twister --list-tests -T <bloodlight-zephr directory path>/tests
+```
+
+To run all tests:
+
+```sh
+    cd $ZEPHYR_BASE
+    ./scripts/twister --device-testing --device-serial /dev/ttyACM2 -p bloodlight_rev2  -T <bloodlight-zephr directory path>/tests --board-root=~/<bloodlight-zephr directory path>/boards
+```
