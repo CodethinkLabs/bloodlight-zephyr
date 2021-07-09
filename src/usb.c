@@ -17,14 +17,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// #include <libopencm3/usb/cdc.h>
-// #include <libopencm3/usb/usbd.h>
-// #include <libopencm3/stm32/rcc.h>
-// #include <libopencm3/stm32/gpio.h>
-
-#if (BL_REVISION >= 2)
-// #include <libopencm3/stm32/crs.h>
-#endif
+#include <drivers/uart.h>
+#include <usb/usb_device.h>
+#include <sys/ring_buffer.h>
 
 #include "common/error.h"
 #include "common/util.h"
@@ -32,7 +27,7 @@
 #include "msg.h"
 #include "mq.h"
 #include "usb.h"
-
+/*
 struct {
 	usbd_device *handle;
 } usb_g;
@@ -60,8 +55,8 @@ static const struct usb_device_descriptor device_descriptor = {
 	.bDeviceProtocol = 0,
 	.bMaxPacketSize0 = 64,
 	.idVendor  = 0x0483, /* TODO: Codethink vendor ID? */
-	.idProduct = 0x5740, /* TODO: Codethink product ID process? */
-	.bcdDevice = 0x0200,
+//	.idProduct = 0x5740, /* TODO: Codethink product ID process? */
+/*	.bcdDevice = 0x0200,
 	.iManufacturer = 1 + BL_USB_STRING_MANUFACTURER,
 	.iProduct      = 1 + BL_USB_STRING_PRODUCT,
 	.iSerialNumber = 1 + BL_USB_STRING_SERIAL_NUMBER,
@@ -181,7 +176,7 @@ static const struct usb_config_descriptor config_descriptor = {
 };
 
 /* Buffer to be used for control requests. */
-uint8_t usbd_control_buffer[128];
+/*uint8_t usbd_control_buffer[128];
 
 static enum usbd_request_return_codes bl_usb__cdcacm_control_request(
 		usbd_device *usbd_dev,
@@ -199,11 +194,11 @@ static enum usbd_request_return_codes bl_usb__cdcacm_control_request(
 		 * even though it's optional in the CDC spec, and we don't
 		 * advertise it in the ACM functional descriptor.
 		 */
-		char local_buf[10];
+/*		char local_buf[10];
 		struct usb_cdc_notification *notif = (void *)local_buf;
 
 		/* We echo signals back to host as notification. */
-		notif->bmRequestType = 0xA1;
+/*		notif->bmRequestType = 0xA1;
 		notif->bNotification = USB_CDC_NOTIFY_SERIAL_STATE;
 		notif->wValue = 0;
 		notif->wIndex = 0;
@@ -274,24 +269,24 @@ static void bl_usb__setup(void)
 #endif
 
 	/* Enable clocks for GPIO port A and USB peripheral. */
-	rcc_periph_clock_enable(RCC_USB);
+/*	rcc_periph_clock_enable(RCC_USB);
 	rcc_periph_clock_enable(RCC_GPIOA);
 
 #if (BL_REVISION >= 2)
 	/* Enable clock recovery system for USB clock. */
-	crs_autotrim_usb_enable();
+/*	crs_autotrim_usb_enable();
 #endif
 
 #if (BL_REVISION == 1)
 	rcc_periph_clock_enable(RCC_GPIOB);
 
 	/* Enable pull-up control. */
-	gpio_mode_setup(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO4);
+/*	gpio_mode_setup(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO4);
 	gpio_set(GPIOB, GPIO4);
 #endif
 
 	/* Setup GPIO pins for USB D+/D-. */
-#if (BL_REVISION == 1)
+/*#if (BL_REVISION == 1)
 	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO11 | GPIO12);
 	gpio_set_af(GPIOA, GPIO_AF14, GPIO11 | GPIO12);
 #else
@@ -302,7 +297,7 @@ static void bl_usb__setup(void)
 }
 
 /* Exported function, documented in usb.h */
-void bl_usb_init(void)
+/*void bl_usb_init(void)
 {
 	bl_usb__setup();
 
@@ -319,34 +314,42 @@ void bl_usb_init(void)
 	usbd_register_set_config_callback(usb_g.handle,
 			bl_usb__cdcacm_set_config);
 }
-
+*/
 /**
  * Send a message to the host.
  *
  * \param[in]  msg  Message to send to host.
  * \return True on success.
  */
-static bool bl_usb__send_message(union bl_msg_data *msg)
+static bool bl_usb__send_message(union bl_msg_data *msg, const struct device *dev)
 {
+	uint16_t send_len = 0;
 	uint16_t len = bl_msg_len(msg);
-	return (len == usbd_ep_write_packet(usb_g.handle, 0x82, msg, len));
+
+	send_len = uart_fifo_fill(dev, (uint8_t *) msg, len);
+	if (send_len < sizeof(buffer)) {
+		return false;
+	}
+
+	return true;
 }
 
 /* Exported function, documented in usb.h */
 void bl_usb_poll(void)
 {
+	const struct device *dev;
+	dev = device_get_binding("CDC_ACM_0");
+
 	if (mq_pending != 0x00) {
 		unsigned channel = bl_mq_pending_channel();
 
 		union bl_msg_data *msg = bl_mq_peek(channel);
-		if (msg && bl_usb__send_message(msg)) {
+		if (msg && bl_usb__send_message(msg, dev)) {
 			bl_mq_release(channel);
 		}
 	} else if (usb_response_used) {
-		if (bl_usb__send_message((union bl_msg_data *)&usb_response)) {
+		if (bl_usb__send_message((union bl_msg_data *)&usb_response, dev)) {
 			usb_response_used = false;
 		}
 	}
-
-	usbd_poll(usb_g.handle);
 }
