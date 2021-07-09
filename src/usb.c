@@ -332,7 +332,27 @@
 static bool bl_usb__send_message(union bl_msg_data *msg)
 {
 	uint16_t len = bl_msg_len(msg);
-	return (len == usbd_ep_write_packet(usb_g.handle, 0x82, msg, len));
+
+	dev = device_get_binding("CDC_ACM_0");
+	if (!dev) {
+		return false;
+	}
+
+	if (usb_enable(NULL)) {
+		return false;
+	}
+
+	ring_buf_init(&ringbuf, sizeof(len), ring_buffer);
+
+	uart_irq_tx_enable(dev);
+	if (uart_irq_tx_ready(dev)) {
+		send_len = uart_fifo_fill(dev, msg, len);
+		if (send_len < len) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /* Exported function, documented in usb.h */
