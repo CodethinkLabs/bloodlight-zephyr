@@ -234,4 +234,5 @@ void main (void) {
 		bl_led_set(0);
 		k_msleep(SLEEP_TIME_MS);
 	}
+			printf("\n*****LED APIs tests Completed****\n");
 };
