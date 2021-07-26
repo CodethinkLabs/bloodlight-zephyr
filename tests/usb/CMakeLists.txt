@@ -17,9 +17,28 @@ project(led_test)
 target_sources(app PRIVATE 
     test_usb.c
     ../../src/usb.c
+    ../../src/msg.c
 )
+
+## The code below is meant to obtain the last commit sha and store it for future
+## use in msg.c. However, this was giving me many headaches so I decided to
+## hard-code a random sha to able to move forward and create an issue in the
+## project's repo explaining this and the need to fix it.
+##find_package(Git QUIET)
+##if (Git_FOUND)
+##    execute_process(
+##        COMMAND "shell" "git" "rev-parse" "--verify HEAD"
+##       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+##        RESULT_VARIABLE git_result
+##        OUTPUT_VARIABLE commit
+##        )
+##else()
+##    message("ERROR: Git wasn't found")
+##endif()
+##message(STATUS "git ver[${git_result}]: ${commit}")
 
 add_compile_definitions(
     BL_REVISION=2
     REVISION=2
+    BL_COMMIT_SHA="57348f49c171e940fc3ecd291d04b2d5cac1ee0f"
 )
