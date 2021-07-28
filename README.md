@@ -49,8 +49,18 @@ Now you can run some basic tests to make sure the LEDs and USB work:
 1. Flash the board with the 'zephyr.elf' executable in build/zephyr
 2. The test program in src/main.c should print hello_world via ttyACM* (ttyACM2 in my case), and make the blue LED blink
 
-## Objective
+## Board Setup
 
-The idea is to have a `Zephyr` out of tree app. To achieve this we will first need to establish a connection between our board support files and zephyr and then between our app and zephyr.
+Refer to [bloodlight-firmware/hardware-setup](https://github.com/CodethinkLabs/bloodlight-firmware#hardware-setup) for infromation on how to setup the board.
 
-The second task won't be hard, but the first one it might be a bit more tricky, since so far I haven't found an example of a running app that uses a board that is not supported by zephyr.
+## Weird Problem fixing
+
+If you run into unexplicable problems during the build or flash process try the next to fix them.
+
+**SAVE CHANGES FIRST!!!**
+
+- Option 1:
+    1. In `zephyrproject/zephyr` execute `git clean -fd`.
+    2. `west update`
+
+- Option 2: Delete `zephyrproject/` and `zephyr-sdk` directories and install zephyr back.
