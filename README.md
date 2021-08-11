@@ -1,57 +1,95 @@
-# Zephyr Support
+# Bloodlight-Zephyr
+
+## Introduction
+
+This projects aims to develop firmware support for Codethink's [Bloodlight board](https://github.com/CodethinkLabs/bloodlight-hardware)
+using [Zephyr RTOS](https://www.zephyrproject.org/). To do so, we take as a reference the [Bloodlight-firmware](https://github.com/CodethinkLabs/bloodlight-firmware) project and we first replace [Libopencm3](https://libopencm3.org/) library's APIs with Zephyr APIs. Sometimes this is not straighforward and we can't just replace one by the other because they don't share identical behaviours. When this happens, some workarounds are put in place to be able to use the Zephyr API without modifying too much the original function's behaviour.
 
 ## Current status
 
-This is a work in progress section. Currently, in order to be able to use the bloodlight board with zephyr a little workaround is needed.
+So far, we currently have completed:
 
-1. Follow the Zephy [getting started](pw) steps.
-2. Ensure the following environment variables are set:
+- Added Zephyr board support for bloodlight_rev2 board. For information on how to add board support read Zephyr's [Board Porting Guide](https://docs.zephyrproject.org/latest/guides/porting/board_porting.html?highlight=board). To check the actual support work check [boards/arm/bloodlight_rev2](boards/arm/bloodlight_rev2).
 
-```sh
-    export ZEPHYR_BASE=<path of zephyr project..>
-    export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
-    export ZEPHYR_SDK_INSTALL_DIR=<toolchain location..>
-```
+- Configure CMake to be able to build the app with the board support files stored in this repo isntead of the Zephyr's repository tree.
 
-  Example of the Zephyr environment variable settings:
-```
-    export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
-    export ZEPHYR_SDK_INSTALL_DIR="/opt/zephyr-sdk/"
-    export ZEPHYR_BASE=/home/rdale/projects/co054/src/zephyrproject/zephyr
+- Move bloodlight-firmware code here to start migrating it to zephyr.
+  - Currently this are the bits that have been sucessfully migrated to Zephyr:
+    - Led Support.
+  - Currently this are the bits that we are working on migrating to Zephyr:
+    - USB Support.
 
-```
+- Add tests for:
+  - LEDs.
 
-3. Build with west:
+## Future Tasks
 
-```sh
-    cd $ZEPHYR_BASE
-    west build <bloodlight-zephr directory path/${Desired app}>
-```
+- Implement zephyr's Ztest framework in our tests. This work has been already started but its on hold. See [Zephyr ztest for LEDs](https://github.com/CodethinkLabs/bloodlight-zephyr/issues/16).
+- [Replace GPIO port idx identifier with zephyrs one](https://github.com/CodethinkLabs/bloodlight-zephyr/issues/14).
+- Add support for reading ADC using Zephyr
+- Get sensor readings working with the opamps
+- Add DMA support to stm32 ADC driver in Zephyr. This work was started a while ago but it was put on hold by this project, you might want to check first if this was already achieved in Zephyr before working on this. Check [this branch](https://github.com/ikerperezdelpalomar/zephyr/commits/adc_dma) for the started work and [Add VREF, TEMPSENSOR, VBAT internal channels to the stm32 adc driver](https://github.com/zephyrproject-rtos/zephyr/issues/17375) for information.
+- Implement DMA in out readings.
 
-If you would like to make a clean build use
+More information in [Task-Planning](https://github.com/CodethinkLabs/bloodlight-zephyr/issues/11).
 
-```sh
-    west build -p always <bloodlight-zephr directory path/${Desired app}>
-```
+## Getting Started
 
-4. Or build with cmake if preferred:
+Currently, in order to be able to use the bloodlight board with zephyr a little workaround is needed.
 
-```sh
-    cd <bloodlight-zephr directory path>
-    mkdir build
-    cd build
-    cmake ..
-    make
-```
+1. **Follow Zephyr's [Getting Started](https://docs.zephyrproject.org/latest/getting_started/index.html#) steps**.
+2. **Ensure the following environment variables are set:**
 
-Now you can run some basic tests to make sure the LEDs and USB work:
+    ```sh
+        export ZEPHYR_BASE=<path of zephyr project..>
+        export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+        export ZEPHYR_SDK_INSTALL_DIR=<toolchain location..>
+    ```
 
-1. Flash the board with the 'zephyr.elf' executable in build/zephyr
-2. The test program in src/main.c should print hello_world via ttyACM* (ttyACM2 in my case), and make the blue LED blink
+      Example of the Zephyr environment variable settings:
 
-## Board Setup
+    ```sh
+        export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+        export ZEPHYR_SDK_INSTALL_DIR="/opt/zephyr-sdk/"
+        export ZEPHYR_BASE=/home/rdale/projects/co054/src/zephyrproject/zephyr
+    ```
 
-Refer to [bloodlight-firmware/hardware-setup](https://github.com/CodethinkLabs/bloodlight-firmware#hardware-setup) for infromation on how to setup the board.
+3. **Build**
+
+    - Option 1: Build with `west`.
+
+        ```sh
+            cd $ZEPHYR_BASE
+            west build <bloodlight-zephr directory path/${Desired app}>
+        ```
+
+        Current working app is `tests/led/`.
+
+        If you would like to make a clean build use
+
+        ```sh
+            west build -p always <bloodlight-zephr directory path/${Desired app}>
+        ```
+
+    - Option 2: Build with cmake if preferred:
+
+        ```sh
+            cd <bloodlight-zephr directory path>
+            mkdir build
+            cd build
+            cmake ..
+            make
+        ```
+
+4. **Board Setup**: Please refer to Bloodlight-firmware's Readme [Hardware Setup](https://github.com/CodethinkLabs/bloodlight-firmware#hardware-setup) section for an explanation about how to do this.
+
+5. **Flash**
+
+    ```sh
+        west flash
+    ```
+
+ *`tests/led/` program should report via `ttyACM*` (ttyACM2 in my case), and make the LEDs blink.*
 
 ## Weird Problem fixing
 
