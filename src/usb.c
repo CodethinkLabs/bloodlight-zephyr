@@ -358,6 +358,15 @@ static bool bl_usb__receive_message(union bl_msg_data *msg, const struct device 
 	return true;
 }
 
+static void interrupt_handler(const struct device *dev, void *user_data)
+{
+	ARG_UNUSED(user_data);
+	if (uart_irq_rx_ready(dev))
+	{
+		bl_usb__receive_message(msg,dev);
+	}
+}
+
 /* Exported function, documented in usb.h */
 void bl_usb_poll(void)
 {
