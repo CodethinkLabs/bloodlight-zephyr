@@ -23,7 +23,7 @@
 /**
  * Initialise the USB module.
  */
-void bl_usb_init(void);
+bool bl_usb_init(void);
 
 /**
  * Poll the USB.

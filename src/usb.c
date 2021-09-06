@@ -367,6 +367,24 @@ static void interrupt_handler(const struct device *dev, void *user_data)
 	}
 }
 
+bool bl_usb_init(void)
+{
+	const struct device *dev;
+
+	dev = device_get_binding("CDC_ACM_0");
+	if (!dev) {
+		return false;
+	}
+
+	if (usb_enable(NULL)) {
+		return false;
+	}
+
+	uart_irq_callback_set(dev, interrupt_handler);
+	uart_irq_rx_enable(dev);
+	return true;
+}
+
 /* Exported function, documented in usb.h */
 void bl_usb_poll(void)
 {
