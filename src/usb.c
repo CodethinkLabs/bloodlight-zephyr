@@ -334,6 +334,30 @@ static bool bl_usb__send_message(union bl_msg_data *msg, const struct device *de
 	return true;
 }
 
+static bool bl_usb__receive_message(union bl_msg_data *msg, const struct device *dev)
+{
+	uint16_t recv_len = 0;
+	uint16_t len = bl_msg_len(msg);
+
+	
+	recv_len = uart_fifo_read(dev, (uint8_t *) msg, len);
+	if (recv_len < len)
+		return false;
+
+	msg = bl_msg_decode((uint8_t *) msg, len);
+	if (msg == NULL) {
+		usb_response.response.type        = BL_MSG_RESPONSE;
+		usb_response.response.response_to = bl_msg_get_type(msg);
+		usb_response.response.error_code  = BL_ERROR_BAD_MESSAGE_LENGTH;
+		usb_response_used = true;
+		return false;
+	}
+
+	usb_response_used = bl_msg_handle(msg, &usb_response);
+
+	return true;
+}
+
 /* Exported function, documented in usb.h */
 void bl_usb_poll(void)
 {
