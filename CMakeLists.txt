@@ -23,7 +23,7 @@ target_sources(app PRIVATE
 #    src/spi.c
 #    src/spi-test.c
 #    src/tick.c
-#    src/usb.c
+    src/usb.c
 #    src/acq/adc.c
 #    src/acq.c
 #    src/acq/channel.c
