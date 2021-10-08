@@ -16,8 +16,6 @@
 
 #include <stdbool.h>
 
-#include <libopencm3/stm32/rcc.h>
-
 #include "common/error.h"
 
 #include "acq.h"
@@ -27,6 +25,25 @@
 #include "tick.h"
 #include "delay.h"
 #include "spi.h"
+
+/*Definitions to enable power interface clock*/
+#define RCC_APB1ENR1 0x58
+#define WRITE_RCC_APB1ENR1(val) ((*(volatile uint32_t *)RCC_APB1ENR1) = (val))
+#define READ_RCC_APB1ENR1()     (*(volatile uint32_t *)RCC_APB1ENR1)
+#define RCC_PWR 28
+
+/*Definitions to enable flash memory interface clock*/
+#define RCC_AHB1ENR 0x48
+#define WRITE_RCC_AHB1ENR(val) ((*(volatile uint32_t *)RCC_AHB1ENR) = (val))
+#define READ_RCC_AHB1ENR()     (*(volatile uint32_t *)RCC_AHB1ENR)
+#define RCC_FLASH 8
+
+/*Definitions to enable power interface clock*/
+#define RCC_APB2ENR 0x60
+#define WRITE_RCC_APB2ENR(val) ((*(volatile uint32_t *)RCC_APB2ENR) = (val))
+#define READ_RCC_APB2ENR()     (*(volatile uint32_t *)RCC_APB2ENR)
+#define RCC_SYSCFGEN 0
+
 
 enum bl_acq_spi_mode bl_spi_mode = BL_ACQ_SPI_INIT;
 
@@ -52,22 +69,18 @@ void bl_init(void)
 	const struct rcc_clock_scale *rcc_config;
 
 #if (BL_REVISION == 1)
-	rcc_config = &rcc_hse_16mhz_3v3;
+	//rcc_config = &rcc_hse_16mhz_3v3;
 #else
-	rcc_config = &rcc_hse_16mhz_3v3[RCC_CLOCK_3V3_170MHZ];
-
-	rcc_periph_clock_enable(RCC_PWR);
-	rcc_periph_clock_enable(RCC_FLASH);
-	rcc_periph_clock_enable(RCC_SYSCFG);
+	WRITE_RCC_APB1ENR1(RCC_PWR);
+	WRITE_RCC_AHB1ENR1(RCC_FLASH);
+	WRITE_RCC_APB2ENR1(RCC_SYSCFGEN);
 #endif
-
-	rcc_clock_setup_pll(rcc_config);
 
 	bl_tick_init(rcc_config->ahb_frequency);
 	bl_usb_init();
 	bl_led_init();
-	bl_acq_init(rcc_config->ahb_frequency);
-	bl_spi_init();
+	//bl_acq_init(rcc_config->ahb_frequency);
+	//bl_spi_init();
 }
 
 #ifndef BL_SPI_TEST
