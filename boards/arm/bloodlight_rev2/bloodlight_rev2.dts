@@ -182,12 +182,15 @@
 //};
 
 &clk_hse {
-	clock-frequency = <DT_FREQ_M(24)>;
+	clock-frequency = <DT_FREQ_M(16)>;
 	status = "okay";
 };
 
+/* The values below were taken from
+rcc_hrcc_configse_16mhz_3v3[RCC_CLOCK_3V3_170MHZ]  line in bl.c.
+Check bloodlight-firmware bl.c file for reference */
 &pll {
-	div-m = <6>;
+	div-m = <4>;
 	mul-n = <85>;
 	div-p = <7>;
 	div-q = <2>;
