@@ -18,6 +18,7 @@ target_sources(app PRIVATE
     test_usb.c
     ../../src/usb.c
     ../../src/msg.c
+    ../../src/bl.c
 )
 
 ## The code below is meant to obtain the last commit sha and store it for future

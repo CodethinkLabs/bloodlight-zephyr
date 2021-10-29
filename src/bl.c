@@ -66,17 +66,17 @@ const struct rcc_clock_scale rcc_hse_16mhz_3v3 = {
 /* Exported function, documented in bl.h */
 void bl_init(void)
 {
-	const struct rcc_clock_scale *rcc_config;
+	//const struct rcc_clock_scale *rcc_config;
 
 #if (BL_REVISION == 1)
 	//rcc_config = &rcc_hse_16mhz_3v3;
 #else
 	WRITE_RCC_APB1ENR1(RCC_PWR);
-	WRITE_RCC_AHB1ENR1(RCC_FLASH);
-	WRITE_RCC_APB2ENR1(RCC_SYSCFGEN);
+	WRITE_RCC_AHB1ENR(RCC_FLASH);
+	WRITE_RCC_APB2ENR(RCC_SYSCFGEN);
 #endif
 
-	bl_tick_init(rcc_config->ahb_frequency);
+	//bl_tick_init(rcc_config->ahb_frequency);
 	bl_usb_init();
 	bl_led_init();
 	//bl_acq_init(rcc_config->ahb_frequency);
